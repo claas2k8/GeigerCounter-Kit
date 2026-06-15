@@ -189,8 +189,6 @@ to view live graphs.
 - Arduino Nano
 - M4011 Geiger tube interface board
 - Analog moving-coil meter
-- 10 kΩ resistor
-- 10 µF capacitor
 - 5-position rotary switch
 - 3×AAA battery holder or regulated 5 V supply
 
