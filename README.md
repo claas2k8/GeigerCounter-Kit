@@ -1,149 +1,212 @@
 # Analog Geiger Counter with Multi-Range Meter Output
 
-## Overview
-
-This project converts the output of an M4011 Geiger-Müller tube into a proportional analog meter indication using an Arduino Nano and a moving-coil meter.
-
-The instrument uses a 60-second rolling CPM average to provide stable readings without excessive needle movement. Four switch-selectable ranges are provided, together with a battery check position.
-
-The analog output is generated on pin D9 using PWM and a low-pass RC filter. The meter is calibrated for a full-scale output of 1.1 V.
+An Arduino Nano-based analog Geiger counter using an M4011 tube and a moving-coil meter. The instrument provides four selectable CPM ranges and a meter test mode, producing a 0–1.1 V analog output through a filtered PWM signal.
 
 ---
 
-## Features
+# Features
 
-* M4011 Geiger tube support
-* 60-second rolling CPM calculation
-* Stable analog needle indication
-* Four selectable CPM ranges
-* Battery check mode
-* 1.1 V full-scale analog output
-* Additional +0.05 V correction above 0.2 V
-* Serial monitor output
-* 10 ms pulse debounce
-
----
-
-## Hardware Connections
-
-### Geiger Module
-
-| M4011 Interface | Arduino Nano |
-| --------------- | ------------ |
-| Pulse Output    | D3           |
-| +5 V            | 5 V          |
-| Ground          | GND          |
+- M4011 Geiger-Müller tube support
+- Real-time response with exponential filtering
+- Smooth analog meter indication
+- Four selectable ranges
+- Meter CHECK function
+- Battery-voltage compensated output
+- 1.1 V full-scale output
+- Automatic +0.05 V output correction above 0.2 V
+- Serial Plotter support
+- Pulse debounce protection
 
 ---
 
-### Analog Meter Output
+# Hardware
 
-| Arduino Nano | Connection             |
-| ------------ | ---------------------- |
-| D9           | 10 kΩ resistor         |
-| Output node  | Analog meter input     |
-| Output node  | 10 µF capacitor to GND |
+## Geiger Tube Interface
 
-The resistor and capacitor form a low-pass filter that converts the PWM output into a smooth DC voltage.
-
----
-
-### Range Switch
-
-The range switch grounds one pin at a time.
-
-| Position | Pin | Range         |
-| -------- | --- | ------------- |
-| 1        | D4  | 0–100 CPM     |
-| 2        | D5  | 0–1000 CPM    |
-| 3        | D6  | 0–10,000 CPM  |
-| 4        | D7  | 0–100,000 CPM |
-| 5        | D10 | Battery Check |
-
-All switch inputs use INPUT_PULLUP.
+| Signal | Arduino Nano |
+|----------|----------|
+| Pulse Output | D3 |
+| +5 V | 5V |
+| Ground | GND |
 
 ---
 
-## Battery Check Mode
+## Analog Meter Output
 
-When position 5 is selected (D10 grounded), the meter no longer displays CPM.
+The output on D9 is filtered to produce a DC voltage.
 
-Instead:
+```
+D9
+ |
+10 kΩ
+ |
+ +------> Meter +
+ |
+10 µF
+ |
+GND
+```
 
-* 0 V supply → 0 V meter output
-* 5.0 V supply → 1.1 V meter output (full scale)
+Full-scale meter voltage:
 
-This allows the meter to function similarly to classic survey meters.
-
----
-
-## Output Calibration
-
-The meter is calibrated so that:
-
-| Meter Output | Scale Reading |
-| ------------ | ------------- |
-| 0 V          | Zero          |
-| 0.55 V       | Half scale    |
-| 1.1 V        | Full scale    |
-
-An additional correction of +0.05 V is applied whenever the output exceeds 0.2 V.
+```
+1.1 V
+```
 
 ---
 
-## CPM Averaging
+## Range Switch
 
-Counts are accumulated in sixty 1-second bins.
+The switch grounds one pin at a time.
 
-The displayed CPM is the sum of the previous 60 seconds:
+| Position | Pin | Range |
+|-----------|-----|------|
+| 1 | D4 | 0–100 CPM |
+| 2 | D5 | 0–1000 CPM |
+| 3 | D6 | 0–10,000 CPM |
+| 4 | D7 | 0–100,000 CPM |
+| 5 | D8 | CHECK |
 
-CPM = counts collected during the last 60 seconds
+All inputs use:
 
-This approach prevents unrealistic jumps caused by individual pulses and provides smooth meter operation.
+```cpp
+INPUT_PULLUP
+```
 
 ---
 
-## Serial Output
+# Meter CHECK Mode
+
+Selecting position 5 disconnects the CPM display and instead performs a continuous meter test.
+
+### Cycle
+
+| Time | Output |
+|--------|------|
+| 0–5 s | 0 → 1.1 V |
+| 5–10 s | 1.1 → 0 V |
+
+The cycle repeats continuously while in CHECK mode.
+
+---
+
+# CPM Processing
+
+Counts are sampled once per second.
+
+Instantaneous CPM:
+
+```
+Instant CPM = Counts/s × 60
+```
+
+The display value is filtered using an exponential moving average:
+
+```
+CPMfiltered = 0.95 × CPMfiltered + 0.05 × CPMinstant
+```
+
+This provides:
+
+- Fast response to nearby sources
+- Smooth needle movement
+- No excessive jumping
+
+---
+
+# Output Voltage
+
+For each range:
+
+```
+Voltage = 1.1 × (CPM / FullScale)
+```
+
+An additional correction is applied:
+
+```
+if Voltage > 0.2 V
+    Voltage += 0.05 V
+```
+
+Maximum output:
+
+```
+1.1 V
+```
+
+---
+
+# Battery Compensation
+
+The Arduino continuously measures its own supply voltage.
+
+PWM output is automatically adjusted:
+
+```
+PWM = Voltage × 255 / Vcc
+```
+
+This keeps the meter calibration nearly constant whether powered from:
+
+- USB
+- External 5 V supply
+- 3×AAA battery pack
+
+---
+
+# Serial Plotter
+
+The sketch outputs:
+
+- CPM
+- Voltage
+- Scale
 
 Example:
 
 ```
-CPM: 34 | Range: 0-100 | Output: 0.424 V
+CPM:34.2 Voltage:0.423 Scale:100
 ```
 
-Battery check mode:
+Open:
 
 ```
-CHECK MODE | Vcc = 4.97 V
+Tools → Serial Plotter
 ```
+
+to view live graphs.
 
 ---
 
-## Pin Assignments
+# Pin Assignments
 
-| Function            | Pin |
-| ------------------- | --- |
-| Geiger Pulse Input  | D3  |
-| Analog Meter Output | D9  |
-| 100 CPM Range       | D4  |
-| 1000 CPM Range      | D5  |
-| 10,000 CPM Range    | D6  |
-| 100,000 CPM Range   | D7  |
-| Battery Check       | D10 |
-
----
-
-## Recommended Supply
-
-* Arduino Nano
-* 5 V regulated supply
-* M4011 Geiger tube interface board
-* Analog meter movement requiring 1.1 V full-scale indication
+| Function | Pin |
+|-----------|-----|
+| Geiger pulse input | D3 |
+| Analog meter output | D9 |
+| 100 CPM range | D4 |
+| 1000 CPM range | D5 |
+| 10,000 CPM range | D6 |
+| 100,000 CPM range | D7 |
+| CHECK mode | D8 |
 
 ---
 
-## Notes
+# Recommended Components
 
-The analog output is PWM-based and relies on the RC filter for smoothing. For higher accuracy and lower ripple, a DAC such as the MCP4725 may be substituted.
+- Arduino Nano
+- M4011 Geiger tube interface board
+- Analog moving-coil meter
+- 10 kΩ resistor
+- 10 µF capacitor
+- 5-position rotary switch
+- 3×AAA battery holder or regulated 5 V supply
+
+---
+
+# Notes
+
+The analog output uses PWM and an RC filter. For improved accuracy and lower ripple, a DAC such as an MCP4725 can be substituted.
 
 This instrument is intended for educational and experimental use and is not calibrated for radiation protection or dosimetry applications.
