@@ -64,14 +64,6 @@ line and turns the entire unit on and off.
 
 ---
 
-## Geiger Tube Interface
-
-| Signal | Arduino Nano Pin |
-|--------|-----------------|
-| Pulse output | D3 |
-| +5 V | 5V |
-| Ground | GND |
-
 ---
 
 ## Analog Meter Output
