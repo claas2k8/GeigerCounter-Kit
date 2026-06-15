@@ -33,24 +33,15 @@ An Arduino Nano-based analog Geiger counter using an M4011 tube and a moving-coi
 
 ## Analog Meter Output
 
-The output on D9 is filtered to produce a DC voltage.
-
-```
-D9
- |
-10 kΩ
- |
- +------> Meter +
- |
-10 µF
- |
-GND
+The output on D9 
 ```
 
 Full-scale meter voltage:
 
 ```
-1.1 V
+1 V
+
+but to combat meter inacuracy an full scale max reading is then dispalyed as 1.1V to enshure an pegged indication.
 ```
 
 ---
