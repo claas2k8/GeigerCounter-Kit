@@ -39,11 +39,10 @@ The output on D9
 Full-scale meter voltage:
 
 ```
-1 V
+1.0 V
 
-but to combat meter inacuracy an full scale max reading is then dispalyed as 1.1V to enshure an pegged indication.
 ```
-
+but to combat meter inacuracy an full scale max reading is then dispalyed as 1.1V to enshure an pegged indication.
 ---
 
 ## Range Switch
